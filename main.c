@@ -5,6 +5,21 @@
 #include "emmintrin.h"
 #include "pmmintrin.h"
 
+#if _WIN32 && defined(__GNUC__)
+#include <sys/time.h>
+#include <inttypes.h>
+#endif
+
+#if _MSC_VER
+#define __restrict__ __restrict 
+
+#define Align16 __declspec (align(16))
+#else
+
+#define Align16 __attribute__ ((aligned (16)))
+
+#endif
+
 #if __APPLE__
 #include <mach/mach_time.h>
 #define ORWL_NANO (+1.0E-9)
@@ -29,6 +44,39 @@ struct timespec orwl_gettime(void) {
 }
 
 #endif
+
+int long long GetTime()
+{
+#if _WIN32 && defined(__GNUC__)	
+  struct timeval t1;
+
+	// start timer
+	gettimeofday(&t1, NULL);
+
+  return (int long long)t1.tv_sec * 1000000000LL + (int long long)t1.tv_usec * 1000LL;
+#elif _MSC_VER
+  struct _timespec32 t1;
+  _timespec32_get(&t1, TIME_UTC);
+
+  return (long long int)t1.tv_sec * 1000000000LL + (long long int)t1.tv_nsec;
+#elif __APPLE__
+  struct timespec t1;
+  t1 = orwl_gettime();
+
+  return (long long int)t1.tv_sec * 1000000000LL + (long long int)t1.tv_nsec;
+#elif __linux__
+  struct timespec t1;
+  clock_gettime(CLOCK_MONOTONIC, &t1);
+
+  return (long long int)t1.tv_sec * 1000000000LL + (long long int)t1.tv_nsec;
+#else
+  struct timespec t1;
+  timespec_get(&t1, TIME_UTC);
+
+  return (long long int)t1.tv_sec * 1000000000LL + (long long int)t1.tv_nsec;
+#endif
+}
+
 
 #if 0
 void MatrixTransposeFloat(const float * const __restrict__ a, float* __restrict__ result)
@@ -218,29 +266,26 @@ int main(int argc, char *argv[])
 {
   const int iterations = 30;
   
-  float multiplierA[16] __attribute__ ((aligned (16))) = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
-  float multiplierB[16] __attribute__ ((aligned (16))) = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
-  float result[16] __attribute__ ((aligned (16))) = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
-  
-  
-  struct timespec startTime[2];
-  struct timespec stopTime[2];
-  
+  Align16 float multiplierA[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+  Align16 float multiplierB[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+  Align16 float result[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+
+  int long long startTime[2];
+  int long long stopTime[2];
+
   int i;
   
   printf("Begin\n");
   
   PrintMatricies(multiplierA,multiplierB,result);
   
-#if __APPLE__
-  startTime[0] = orwl_gettime();
-#elif __linux__
-  clock_gettime(CLOCK_MONOTONIC, &startTime[0]);
+  startTime[0] = GetTime();
+  
+#if _WIN32
+  printf("Start Time: %I64d\n", startTime[0]);
 #else
-  timespec_get(&startTime[0], TIME_UTC);
-#endif
-  printf("Start Time: %ld, %ld\n", startTime[0].tv_sec, startTime[0].tv_nsec);
-    
+  printf("Start Time: %lld\n", startTime[0]);
+#endif    
   float* ptrA = multiplierB;
   float* ptrB = result;
   
@@ -251,25 +296,22 @@ int main(int argc, char *argv[])
     ptrA = ptrB;
     ptrB = t;
   }
-#if __APPLE__  
-  stopTime[0] = orwl_gettime();
-#elif __linux__
-  clock_gettime(CLOCK_MONOTONIC, &stopTime[0]);
+  stopTime[0] = GetTime();
+
+#if _WIN32
+  printf("Stop Time:  %I64d\n", stopTime[0]);
 #else
-  timespec_get(&startTime[0], TIME_UTC);
-#endif
-  printf("Stop Time: %ld, %ld\n", stopTime[0].tv_sec, stopTime[0].tv_nsec);
+  printf("Stop Time:  %lld\n", stopTime[0]);
+#endif    
   
   printf("\n");
   
-#if __APPLE__  
-  startTime[1] = orwl_gettime();
-#elif __linux__
-  clock_gettime(CLOCK_MONOTONIC, &startTime[1]);
+  startTime[1] = GetTime();
+#if _WIN32
+  printf("Start Time: %I64d\n", startTime[1]);
 #else
-  timespec_get(&startTime[1], TIME_UTC);
-#endif
-  printf("Start Time: %ld, %ld\n", startTime[1].tv_sec, startTime[1].tv_nsec);
+  printf("Start Time: %lld\n", startTime[1]);
+#endif  
     
   ptrA = multiplierB;
   ptrB = result;
@@ -281,33 +323,33 @@ int main(int argc, char *argv[])
     ptrA = ptrB;
     ptrB = t;
   }
-#if __APPLE__  
-  stopTime[1] = orwl_gettime();
-#elif __linux__
-  clock_gettime(CLOCK_MONOTONIC, &stopTime[1]);
+  stopTime[1] = GetTime();
+#if _WIN32
+  printf("Stop Time:  %I64d\n", stopTime[0]);
 #else
-  timespec_get(&startTime[1], TIME_UTC);
-#endif
-  printf("Stop Time: %ld, %ld\n", stopTime[1].tv_sec, stopTime[1].tv_nsec);
+  printf("Stop Time:  %lld\n", stopTime[0]);
+#endif  
   
   PrintMatricies(multiplierA,multiplierB,result);
   
   printf("\n");
   printf("Result\n");
   
-  long long int start = (long long int)startTime[0].tv_sec * 1000000000LL + (long long int)startTime[0].tv_nsec;
-  long long int stop = (long long int)stopTime[0].tv_sec * 1000000000LL + (long long int)stopTime[0].tv_nsec; 
-  long long int time = stop - start;
-  printf("Time: %lld\n", time);
+  long long int time = stopTime[0] - startTime[0];
+#if _WIN32
+  printf("Time:  %I64d\n", time);
+#else
+  printf("Time:  %lld\n", time);
+#endif  
+
   
-  start = (long long int)startTime[1].tv_sec * 1000000000LL + (long long int)startTime[1].tv_nsec;
-  stop = (long long int)stopTime[1].tv_sec * 1000000000LL + (long long int)stopTime[1].tv_nsec; 
-  time = stop - start;
-  printf("Time: %lld\n", time);
-  
-  
-  
-  
+  time = stopTime[1] - startTime[1];
+#if _WIN32
+  printf("Time:  %I64d\n", time);
+#else
+  printf("Time:  %lld\n", time);
+#endif  
+
 
   
   
