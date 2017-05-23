@@ -1,3 +1,9 @@
+//Need to define to get time functions to compile on linux
+#if __linux__
+#define _POSIX_C_SOURCE 199309L
+#include <sys/time.h>
+#endif
+
 #include <stdio.h>
 #include <time.h>
 
@@ -10,6 +16,8 @@
 #include <inttypes.h>
 #endif
 
+
+//Define memory align for different systems
 #if _MSC_VER
 #define __restrict__ __restrict 
 
@@ -45,6 +53,7 @@ struct timespec orwl_gettime(void) {
 
 #endif
 
+//Get Time in Nanoseconds
 int long long GetTime()
 {
 #if _WIN32 && defined(__GNUC__)	
@@ -77,57 +86,6 @@ int long long GetTime()
 #endif
 }
 
-
-#if 0
-void MatrixTransposeFloat(const float * const __restrict__ a, float* __restrict__ result)
-{
-  result[ 0] = a[ 0];
-  result[ 1] = a[ 4];
-  result[ 2] = a[ 8];
-  result[ 3] = a[12];
-  
-  result[ 4] = a[ 1];
-  result[ 5] = a[ 5];
-  result[ 6] = a[ 9];
-  result[ 7] = a[13];
-  
-  result[ 8] = a[ 2];
-  result[ 9] = a[ 6];
-  result[10] = a[10];
-  result[11] = a[14];
-  
-  result[12] = a[ 3];
-  result[13] = a[ 7];
-  result[14] = a[11];
-  result[15] = a[15]; 
-}
-
-void MatrixMulTransFloat(const float * const __restrict__ a, const float * const __restrict__ b, float* __restrict__ result)
-{
-  float m[16] __attribute__ ((aligned (16)));
-  MatrixTransposeFloat(a, m);
-  
-  result[ 0] = a[ 0]*b[ 0] + a[ 1]*b[ 1] + a[ 2]*b[ 2] + a[ 3]*b[ 3];
-  result[ 1] = a[ 0]*b[ 4] + a[ 1]*b[ 5] + a[ 2]*b[ 6] + a[ 3]*b[ 7];
-  result[ 2] = a[ 0]*b[ 8] + a[ 1]*b[ 9] + a[ 2]*b[10] + a[ 3]*b[11];
-  result[ 3] = a[ 0]*b[12] + a[ 1]*b[13] + a[ 2]*b[14] + a[ 3]*b[15];
-  
-  result[ 4] = a[ 4]*b[ 0] + a[ 5]*b[ 1] + a[ 6]*b[ 2] + a[ 7]*b[ 3];
-  result[ 5] = a[ 4]*b[ 4] + a[ 5]*b[ 5] + a[ 6]*b[ 6] + a[ 7]*b[ 7];
-  result[ 6] = a[ 4]*b[ 8] + a[ 5]*b[ 9] + a[ 6]*b[10] + a[ 7]*b[11];
-  result[ 7] = a[ 4]*b[12] + a[ 5]*b[13] + a[ 6]*b[14] + a[ 7]*b[15];
-  
-  result[ 8] = a[ 8]*b[ 0] + a[ 9]*b[ 1] + a[10]*b[ 2] + a[11]*b[ 3];
-  result[ 9] = a[ 8]*b[ 4] + a[ 9]*b[ 5] + a[10]*b[ 6] + a[11]*b[ 7];
-  result[10] = a[ 8]*b[ 8] + a[ 9]*b[ 9] + a[10]*b[10] + a[11]*b[11];
-  result[11] = a[ 8]*b[12] + a[ 9]*b[13] + a[10]*b[14] + a[11]*b[15];
-  
-  result[12] = a[12]*b[ 0] + a[13]*b[ 1] + a[14]*b[ 2] + a[15]*b[ 3];
-  result[13] = a[12]*b[ 4] + a[13]*b[ 5] + a[14]*b[ 6] + a[15]*b[ 7];
-  result[14] = a[12]*b[ 8] + a[13]*b[ 9] + a[14]*b[10] + a[15]*b[11];
-  result[15] = a[12]*b[12] + a[13]*b[13] + a[14]*b[14] + a[15]*b[15];
-}
-#endif
 
 void MatrixMulFloat(const float * const __restrict__ a, const float * const __restrict__ b, float* __restrict__ result)
 {
@@ -261,7 +219,7 @@ void PrintMatricies(const float * const a,
   printf("\n");
 }
 
-//expected arguments, num iterations, file
+
 int main(int argc, char *argv[])
 {
   const int iterations = 30;
@@ -286,6 +244,7 @@ int main(int argc, char *argv[])
 #else
   printf("Start Time: %lld\n", startTime[0]);
 #endif    
+
   float* ptrA = multiplierB;
   float* ptrB = result;
   
