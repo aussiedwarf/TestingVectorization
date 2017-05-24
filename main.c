@@ -22,7 +22,7 @@
 #define __restrict__ __restrict 
 
 #define Align16 __declspec (align(16))
-#define Align16 __declspec (align(32))
+#define Align32 __declspec (align(32))
 #else
 
 #define Align16 __attribute__ ((aligned (16)))
@@ -204,13 +204,38 @@ void MatrixMulFloatSSE(const float * const __restrict__ a, const float * const _
 }
 
 /*
-a00
-a01
-a02
-a03
-a04
+possible revelent avx instructions
+
+__m256 _mm256_add_ps (__m256 a, __m256 b)
+__m256 _mm256_dp_ps (__m256 a, __m256 b, const int imm8)
+__m256 _mm256_hadd_ps (__m256 a, __m256 b)
+__m256 _mm256_mul_ps (__m256 a, __m256 b)
+
+__m256 _mm256_broadcast_ps (__m128 const * mem_addr)
+__m256 _mm256_broadcast_ss (float const * mem_addr)
+__m256 _mm256_load_ps (float const * mem_addr)
+void _mm256_store_ps (float * mem_addr, __m256 a)
+
+__m256 _mm256_set_m128 (__m128 hi, __m128 lo)
+__m256 _mm256_set1_ps (float a)
+__m256 _mm256_setr_m128 (__m128 lo, __m128 hi)
+
+__m256 _mm256_movehdup_ps (__m256 a)
+__m256 _mm256_moveldup_ps (__m256 a)
+
+__m256 _mm256_blend_ps (__m256 a, __m256 b, const int imm8)
+__m256 _mm256_blendv_ps (__m256 a, __m256 b, __m256 mask)
+__m256 _mm256_broadcast_ps (__m128 const * mem_addr)
+__m256 _mm256_permute_ps (__m256 a, int imm8)
+__m256 _mm256_permute2f128_ps (__m256 a, __m256 b, int imm8)
+__m256 _mm256_shuffle_ps (__m256 a, __m256 b, const int imm8)
+__m256 _mm256_unpackhi_ps (__m256 a, __m256 b)
+__m256 _mm256_unpacklo_ps (__m256 a, __m256 b)
+
 
 */
+
+#if 0
 void MatrixMulFloatAVX(const float * const __restrict__ a, const float * const __restrict__ b, float* __restrict__ result)
 {
   __m256 a_line, b_line, r_line, sum;
@@ -236,7 +261,7 @@ void MatrixMulFloatAVX(const float * const __restrict__ a, const float * const _
 	_mm_store_ps(&result[0],sum);
 
 }
-
+#endif
 
 void PrintMatricies(const float * const a, 
                     const float * const b, 
