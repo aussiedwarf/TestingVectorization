@@ -22,9 +22,11 @@
 #define __restrict__ __restrict 
 
 #define Align16 __declspec (align(16))
+#define Align16 __declspec (align(32))
 #else
 
 #define Align16 __attribute__ ((aligned (16)))
+#define Align32 __attribute__ ((aligned (32)))
 
 #endif
 
@@ -201,6 +203,41 @@ void MatrixMulFloatSSE(const float * const __restrict__ a, const float * const _
 	_mm_store_ps(&result[12],sum);
 }
 
+/*
+a00
+a01
+a02
+a03
+a04
+
+*/
+void MatrixMulFloatAVX(const float * const __restrict__ a, const float * const __restrict__ b, float* __restrict__ result)
+{
+  __m256 a_line, b_line, r_line, sum;
+	
+	a_line = _mm256_load_ps(&a[0]);
+	b_line = _mm_set1_ps(b[0]);
+	sum = _mm_mul_ps(a_line,b_line);
+
+	a_line = _mm_load_ps(&a[4]);
+	b_line = _mm_set1_ps(b[1]);
+	r_line = _mm_mul_ps(a_line,b_line);
+	sum = _mm_add_ps(sum, r_line);
+
+	a_line = _mm_load_ps(&a[8]);
+	b_line = _mm_set1_ps(b[2]);
+	r_line = _mm_mul_ps(a_line,b_line);
+	sum = _mm_add_ps(sum, r_line);
+	
+	a_line = _mm_load_ps(&a[12]);
+	b_line = _mm_set1_ps(b[3]);
+	r_line = _mm_mul_ps(a_line,b_line);
+	sum = _mm_add_ps(sum, r_line);
+	_mm_store_ps(&result[0],sum);
+
+}
+
+
 void PrintMatricies(const float * const a, 
                     const float * const b, 
                     const float * const c)
@@ -224,9 +261,9 @@ int main(int argc, char *argv[])
 {
   const int iterations = 30;
   
-  Align16 float multiplierA[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
-  Align16 float multiplierB[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
-  Align16 float result[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+  Align32 float multiplierA[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+  Align32 float multiplierB[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+  Align32 float result[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
 
   int long long startTime[2];
   int long long stopTime[2];
